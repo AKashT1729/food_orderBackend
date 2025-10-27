@@ -6,24 +6,43 @@ const orderSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      default: () => new mongoose.Types.ObjectId().toHexString(),
     },
     customer_id: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
       required: true,
       ref: "Customer",
     },
     total_amount: {
       type: Number,
       required: true,
+      default: 0,
     },
     status: {
       type: String,
       required: true,
-      enum: ["Dine-in", "To-go"],
-      default: "Dine-in",
+      default: "Pending",
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      virtuals: true,
+      versionKey: false,
+      transform: (doc, ret) => {
+        ret.id = ret._id;
+        delete ret._id;
+      },
+    },
+    toObject: { virtuals: true },
+  }
 );
+
+// virtual populate for order items
+orderSchema.virtual("order_items", {
+  ref: "OrderItem",
+  localField: "_id",
+  foreignField: "order_id",
+});
 
 export const Order = mongoose.model("Order", orderSchema);
